@@ -1,0 +1,31 @@
+{
+  "manifest_version": 3,
+  "name": "Data Typing Reading Agent",
+  "version": "1.1.0",
+  "description": "Reestructura texto seleccionado bajo el método de Tipado de Datos: identifica entidades núcleo, clasifica su rol funcional y visualiza el conocimiento como grafo interactivo (Cytoscape.js).",
+  "permissions": [
+    "activeTab",
+    "scripting",
+    "storage"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    },
+    "default_title": "Data Typing Agent"
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'"
+  }
+}

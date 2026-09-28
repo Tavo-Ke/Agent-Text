@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <script src="libs/3d-force-graph.min.js"></script>
+</head>
+<body>
+  <div id="graph3d" style="width: 500px; height: 500px;"></div>
+  <script>
+    try {
+        const nodes = [{id: "1", name: "A", color: "red", val: 5}, {id: "2", name: "B", color: "blue", val: 5}];
+        const links = [{source: "1", target: "2", name: "link"}];
+        const Graph = ForceGraph3D()(document.getElementById('graph3d'))
+            .graphData({ nodes: nodes, links: links });
+        console.log("Success");
+    } catch(e) {
+        console.error(e);
+    }
+  </script>
+</body>
+</html>

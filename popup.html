@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="color-scheme" content="dark" />
+  <title>Data Typing Agent</title>
+  <link rel="stylesheet" href="libs/tippy.css" />
+  <style>
+    :root {
+      --bg-canvas:      #0d1117;
+      --bg-surface:     #161b22;
+      --bg-overlay:     #1c2128;
+      --bg-subtle:      #21262d;
+      --bg-muted:       #2d333b;
+      --bg-input:       #0d1117;
+      --border-default: rgba(48,54,61,0.9);
+      --border-muted:   rgba(48,54,61,0.5);
+      --border-accent:  rgba(45,125,210,0.6);
+      --text-primary:   #e6edf3;
+      --text-secondary: #8b949e;
+      --text-muted:     #484f58;
+      --text-accent:    #58a6ff;
+      --text-success:   #3fb950;
+      --text-warn:      #d29922;
+      --text-error:     #f85149;
+      --accent:         #1f6feb;
+      --accent-hover:   #388bfd;
+      --accent-glow:    rgba(31,111,235,0.25);
+      --success:        #3fb950;
+      --warn:           #d29922;
+      --error:          #f85149;
+      --font-sans:  -apple-system, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+      --font-mono:  'Cascadia Code', 'Fira Code', 'Consolas', 'SF Mono', monospace;
+      --syn-header:  #79c0ff;
+      --syn-level:   #ff7b72;
+      --syn-bracket: #56d364;
+      --syn-entity:  #ffa657;
+      --syn-tag:     #79c0ff;
+      --syn-arrow:   #58a6ff;
+      --syn-sep:     #2d333b;
+      --syn-dim:     #484f58;
+      --syn-quote:   #a5d6ff;
+      --syn-number:  #d2a8ff;
+      --syn-meta:    #484f58;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      width: 520px; min-height: 600px;
+      font-family: var(--font-sans);
+      background: var(--bg-canvas); color: var(--text-primary);
+      display: flex; flex-direction: column;
+      font-size: 13px; line-height: 1.5;
+    }
+
+    /* ── HEADER */
+    .header {
+      background: var(--bg-surface);
+      border-bottom: 1px solid var(--border-default);
+      padding: 11px 16px;
+      display: flex; align-items: center; gap: 10px; flex-shrink: 0;
+    }
+    .logo {
+      width: 32px; height: 32px;
+      background: linear-gradient(145deg, #1f6feb, #0d419d);
+      border-radius: 8px; display: flex; align-items: center; justify-content: center;
+      font-size: 15px; flex-shrink: 0;
+      box-shadow: 0 0 0 1px rgba(255,255,255,0.06), 0 4px 12px rgba(31,111,235,0.35);
+    }
+    .header-meta { flex: 1; }
+    .header-meta h1 { font-size: 12px; font-weight: 600; letter-spacing: 0.3px; }
+    .header-meta p  { font-size: 10px; color: var(--text-secondary); margin-top: 1px; }
+    .version-chip {
+      font-size: 9.5px; padding: 2px 7px;
+      background: rgba(31,111,235,0.15);
+      border: 1px solid rgba(31,111,235,0.3);
+      border-radius: 20px; color: var(--text-accent);
+      font-weight: 600; letter-spacing: 0.3px;
+    }
+
+    /* ── BODY */
+    .body {
+      flex: 1; display: flex; flex-direction: column;
+      padding: 12px 14px; gap: 10px;
+      overflow-y: auto; min-height: 0;
+    }
+    .field-label {
+      font-size: 10px; font-weight: 600; color: var(--text-secondary);
+      letter-spacing: 0.5px; margin-bottom: 4px;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .field-label::after { content: ''; flex: 1; height: 1px; background: var(--border-muted); }
+
+    textarea {
+      width: 100%; height: 82px;
+      background: var(--bg-input); border: 1px solid var(--border-default);
+      border-radius: 6px; padding: 8px 10px;
+      color: var(--text-primary); font-family: var(--font-sans); font-size: 12px;
+      resize: vertical; outline: none; transition: border-color .15s, box-shadow .15s;
+    }
+    textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
+    textarea::placeholder { color: var(--text-muted); }
+
+    .config-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .field-group label {
+      display: block; font-size: 10px; font-weight: 600;
+      color: var(--text-secondary); letter-spacing: 0.4px; margin-bottom: 4px;
+    }
+    select {
+      width: 100%; background: var(--bg-overlay);
+      border: 1px solid var(--border-default); border-radius: 6px;
+      padding: 6px 28px 6px 9px; color: var(--text-primary);
+      font-family: var(--font-sans); font-size: 11.5px;
+      outline: none; cursor: pointer; appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%238b949e'/%3E%3C/svg%3E");
+      background-repeat: no-repeat; background-position: right 8px center;
+      transition: border-color .15s, box-shadow .15s;
+    }
+    select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
+
+    /* ── ENGINE VERSION TOGGLE */
+    .version-toggle {
+      display: flex; gap: 0;
+      background: var(--bg-overlay);
+      border: 1px solid var(--border-default);
+      border-radius: 6px; overflow: hidden;
+    }
+    .ver-btn {
+      flex: 1; padding: 6px 10px; border: none; cursor: pointer;
+      font-family: var(--font-sans); font-size: 10.5px; font-weight: 600;
+      background: transparent; color: var(--text-secondary);
+      transition: all .15s; text-align: center;
+      border-right: 1px solid var(--border-default);
+    }
+    .ver-btn:last-child { border-right: none; }
+    .ver-btn.active {
+      background: rgba(31,111,235,0.2);
+      color: var(--text-accent);
+    }
+    .ver-btn:hover:not(.active) { background: var(--bg-subtle); color: var(--text-primary); }
+
+    /* ── API KEY */
+    .api-row { display: flex; gap: 6px; }
+    .api-row input {
+      flex: 1; background: var(--bg-input); border: 1px solid var(--border-default);
+      border-radius: 6px; padding: 6px 10px;
+      color: var(--text-primary); font-family: var(--font-mono); font-size: 10.5px;
+      outline: none; transition: border-color .15s, box-shadow .15s; letter-spacing: 0.5px;
+    }
+    .api-row input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
+    .api-row input::placeholder { color: var(--text-muted); font-style: italic; letter-spacing: 0; }
+
+    /* ── BUTTONS */
+    .btn-row { display: flex; gap: 7px; }
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+      border-radius: 6px; font-family: var(--font-sans); font-weight: 600;
+      cursor: pointer; transition: all .15s; border: 1px solid transparent; white-space: nowrap;
+    }
+    .btn-primary {
+      flex: 1; padding: 8px 14px;
+      background: var(--accent); border-color: rgba(255,255,255,0.08);
+      color: #fff; font-size: 12.5px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.1);
+    }
+    .btn-primary:hover { background: var(--accent-hover); }
+    .btn-primary:active { transform: scale(0.98); }
+    .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+    .btn-secondary {
+      padding: 8px 12px; font-size: 11.5px;
+      background: var(--bg-overlay); border-color: var(--border-default);
+      color: var(--text-primary);
+    }
+    .btn-secondary:hover { background: var(--bg-muted); border-color: var(--border-accent); }
+    .btn-ghost {
+      padding: 4px 9px; font-size: 10px;
+      background: transparent; border-color: var(--border-muted);
+      color: var(--text-secondary);
+    }
+    .btn-ghost:hover { background: var(--bg-subtle); color: var(--text-primary); border-color: var(--border-default); }
+    .btn-ghost.active-state { border-color: var(--success); color: var(--success); background: rgba(63,185,80,0.08); }
+    .btn-export {
+      padding: 5px 10px; font-size: 10px;
+      background: var(--bg-overlay); border: 1px solid var(--border-muted);
+      color: var(--text-secondary); border-radius: 5px; cursor: pointer;
+      font-family: var(--font-sans); font-weight: 600; transition: all .15s;
+    }
+    .btn-export:hover { background: var(--bg-muted); color: var(--text-primary); border-color: var(--border-default); }
+
+    /* ── EXPORT ROW */
+    .export-row {
+      display: flex; align-items: center; gap: 6px;
+    }
+    .export-label { font-size: 9.5px; color: var(--text-muted); margin-right: 2px; }
+
+    /* ── STATUS */
+    .status-bar {
+      display: flex; align-items: center; gap: 7px; padding: 5px 10px;
+      background: var(--bg-surface); border: 1px solid var(--border-muted);
+      border-radius: 6px; font-size: 10.5px; color: var(--text-secondary);
+    }
+    .status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--text-muted); flex-shrink: 0; }
+    .status-dot.ready   { background: var(--success); box-shadow: 0 0 6px var(--success); }
+    .status-dot.loading { background: var(--warn); animation: blink 0.8s infinite; }
+    .status-dot.error   { background: var(--error); }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
+
+    /* ── TABS */
+    .tab-bar { display: flex; border-bottom: 1px solid var(--border-default); flex-shrink: 0; }
+    .tab {
+      flex: 1; padding: 7px 0; border: none; background: transparent;
+      color: var(--text-secondary); font-family: var(--font-sans);
+      font-size: 10.5px; font-weight: 600; cursor: pointer; letter-spacing: 0.2px;
+      border-bottom: 2px solid transparent; margin-bottom: -1px;
+      transition: color .15s, border-color .15s;
+    }
+    .tab:hover { color: var(--text-primary); }
+    .tab.active { color: var(--text-accent); border-bottom-color: var(--accent); }
+
+    /* ── CONSOLE */
+    .console-toolbar {
+      display: flex; align-items: center; justify-content: space-between; margin-bottom: 5px;
+    }
+    .console-dots { display: flex; gap: 5px; }
+    .console-dots span { width: 10px; height: 10px; border-radius: 50%; }
+    .dot-red    { background: #ff5f57; }
+    .dot-yellow { background: #febc2e; }
+    .dot-green  { background: #28c840; }
+
+    #output {
+      background: #010409; border: 1px solid var(--border-default);
+      border-radius: 8px; padding: 0;
+      min-height: 190px; max-height: 240px;
+      overflow-y: auto; resize: vertical;
+      font-family: var(--font-mono); font-size: 11px; line-height: 1.75;
+    }
+    #output-inner {
+      padding: 12px 14px; white-space: pre;
+      overflow-x: auto; min-width: 100%; width: max-content;
+    }
+    .o-header   { color: var(--syn-header); font-weight: 700; font-size: 10.5px; }
+    .o-level    { color: var(--syn-level);  font-weight: 700; }
+    .o-sep      { color: var(--syn-sep); }
+    .o-bracket  { color: var(--syn-bracket); font-weight: 700; }
+    .o-entity   { color: var(--syn-entity);  font-weight: 600; }
+    .o-tag      { color: var(--syn-tag);     font-style: italic; font-size: 10px; }
+    .o-arrow    { color: var(--syn-arrow); }
+    .o-num      { color: var(--syn-number); }
+    .o-quote    { color: var(--syn-quote); }
+    .o-dim      { color: var(--syn-dim); }
+    .o-meta     { color: var(--syn-meta); font-size: 10px; }
+    .o-placeholder { color: var(--text-muted); font-style: italic; font-size: 11px; }
+    .o-v3badge  { color: #a8dadc; font-size: 9.5px; }
+    .o-line     { display: block; border-radius: 3px; transition: background .1s; padding: 0 2px; }
+    .o-line:hover { background: rgba(255,255,255,0.03); }
+
+    /* ── GRAPH 2D & 3D */
+    #panel-graph { display: none; flex-direction: column; gap: 8px; }
+    .graph-toolbar { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+    .graph-toolbar label { font-size: 10px; color: var(--text-secondary); font-weight: 600; white-space: nowrap; }
+    .graph-toolbar select { width: auto; font-size: 10.5px; padding: 4px 22px 4px 8px; }
+    
+    .graph-container-wrapper {
+      position: relative; width: 100%; height: 270px;
+      background: #010409; border: 1px solid var(--border-default);
+      border-radius: 8px; overflow: hidden;
+    }
+    #cy { width: 100%; height: 100%; position: absolute; top:0; left:0; z-index: 1; }
+    #graph3d { width: 100%; height: 100%; position: absolute; top:0; left:0; z-index: 2; display: none; }
+    
+    .graph-stats { margin-left: auto; font-size: 9.5px; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+
+    /* ── WORD CLOUD */
+    #panel-cloud { display: none; flex-direction: column; gap: 8px; height: 300px; }
+    .cloud-wrapper {
+      flex: 1; background: #010409; border: 1px solid var(--border-default);
+      border-radius: 8px; overflow: hidden; position: relative;
+    }
+    #cloudCanvas { width: 100% !important; height: 100% !important; }
+
+    /* ── LEGEND */
+    .legend {
+      display: none; flex-wrap: wrap; gap: 5px 12px; padding: 8px 10px;
+      background: var(--bg-surface); border: 1px solid var(--border-muted); border-radius: 6px;
+    }
+    .legend.open { display: flex; }
+    .legend-item { display: flex; align-items: center; gap: 5px; font-size: 9.5px; color: var(--text-secondary); }
+    .legend-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+
+    /* ── TIPPY */
+    .tippy-box[data-theme~='dta'] {
+      background: #1c2128; border: 1px solid rgba(45,125,210,0.5);
+      border-radius: 8px; font-size: 11.5px; color: #e6edf3;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.7);
+    }
+    .tippy-box[data-theme~='dta'] .tippy-arrow { color: #1c2128; }
+    .tt-term { font-weight: 700; color: #fff; font-size: 12.5px; margin-bottom: 2px; }
+    .tt-tag  { color: #58a6ff; font-size: 10.5px; }
+    .tt-score { color: #3fb950; font-size: 10px; margin-top: 2px; }
+
+    /* ── FOOTER */
+    .footer {
+      background: var(--bg-surface); border-top: 1px solid var(--border-default);
+      padding: 6px 14px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0;
+    }
+    .footer-left { display: flex; gap: 10px; align-items: center; }
+    .footer-text  { font-size: 9px; color: var(--text-muted); }
+    .engine-pill {
+      font-size: 9px; padding: 2px 8px; border-radius: 20px;
+      border: 1px solid var(--border-accent); color: var(--text-accent);
+      font-weight: 600; letter-spacing: 0.3px; background: var(--accent-glow);
+    }
+    .v3-pill {
+      font-size: 9px; padding: 2px 8px; border-radius: 20px;
+      border: 1px solid rgba(168,218,220,0.4); color: #a8dadc;
+      font-weight: 600; letter-spacing: 0.3px; background: rgba(168,218,220,0.08);
+    }
+
+    ::-webkit-scrollbar { width: 4px; height: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--bg-muted); border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--border-accent); }
+  </style>
+</head>
+<body>
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="logo">⬡</div>
+    <div class="header-meta">
+      <h1>DATA TYPING READING AGENT</h1>
+      <p>Clasificación semántica · Grafo de conocimiento</p>
+    </div>
+    <span class="version-chip" id="headerVersion">v3.5+</span>
+  </div>
+
+  <!-- BODY -->
+  <div class="body">
+
+    <!-- INPUT -->
+    <div>
+      <div class="field-label">Texto de entrada</div>
+      <textarea id="inputText"
+        placeholder="Selecciona texto en cualquier página y usa '↗ Capturar', o pégalo directamente aquí…"></textarea>
+    </div>
+
+    <!-- VERSIÓN DEL MOTOR NLP -->
+    <div>
+      <div class="field-label">Versión del motor NLP</div>
+      <div class="version-toggle">
+        <button class="ver-btn active" data-ver="v2" id="verBtn2">
+          ⚙ v2.0 — Heurístico NLP
+        </button>
+        <button class="ver-btn" data-ver="v3" id="verBtn3">
+          🧠 v3.0 — compromise.js + fCoSE
+        </button>
+      </div>
+    </div>
+
+    <!-- CONFIG -->
+    <div class="config-grid">
+      <div class="field-group">
+        <label>Motor de análisis</label>
+        <select id="engineSelect">
+          <option value="heuristic">⚙ Heurístico local</option>
+          <option value="transformers">🤖 Transformers.js (IA Local)</option>
+          <option value="gemini">✦ Gemini Flash</option>
+          <option value="openai">◈ OpenAI GPT-4o</option>
+        </select>
+      </div>
+      <div class="field-group">
+        <label>Dominio semántico</label>
+        <select id="domainSelect">
+          <option value="auto">⟳ Auto-detectar</option>
+          <option value="economics">Economía</option>
+          <option value="management">Administración</option>
+          <option value="communication">Comunicación</option>
+          <option value="law">Derecho</option>
+          <option value="tech">Tecnología</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- API KEY -->
+    <div id="apiKeySection" style="display:none;">
+      <div class="field-label">API Key</div>
+      <div class="api-row">
+        <input type="password" id="apiKeyInput" placeholder="sk-… o AIza…" />
+        <button class="btn btn-secondary" id="btnSaveKey" style="padding:6px 12px;font-size:11px;">Guardar</button>
+      </div>
+    </div>
+
+    <!-- ACTION BUTTONS -->
+    <div class="btn-row">
+      <button class="btn btn-secondary" id="btnCapture">↗ Capturar</button>
+      <button class="btn btn-secondary" id="btnHighlight" style="color:var(--text-accent);border-color:var(--border-accent);">🖍 Resaltar Web</button>
+      <button class="btn btn-primary" id="btnAnalyze">
+        <span>⬡</span> Analizar texto
+      </button>
+    </div>
+
+    <!-- EXPORT ROW -->
+    <div class="export-row">
+      <span class="export-label">Exportar:</span>
+      <button class="btn-export" id="btnExportTxt">⬇ .TXT</button>
+      <button class="btn-export" id="btnExportMd" style="color:#a8dadc;border-color:rgba(168,218,220,0.5);">⬇ .MD</button>
+      <button class="btn-export" id="btnExportJson">⬇ .JSON</button>
+      <button class="btn-export" id="btnExportCsv">⬇ .CSV</button>
+      <button class="btn-export" id="btnExportPng">📸 .PNG</button>
+    </div>
+
+    <!-- STATUS -->
+    <div class="status-bar">
+      <div class="status-dot" id="statusDot"></div>
+      <span id="statusText">Listo — motor heurístico v2.0 activo</span>
+    </div>
+
+    <!-- TABS -->
+    <div class="tab-bar">
+      <button class="tab active" data-tab="console">📋 Estructura</button>
+      <button class="tab"        data-tab="graph">🕸 Grafo</button>
+      <button class="tab"        data-tab="cloud">☁ Nube</button>
+      <button class="tab"        data-tab="humanizer">🎭 Humanizar</button>
+    </div>
+
+    <!-- CONSOLE PANEL -->
+    <div id="panel-console">
+      <div class="console-toolbar">
+        <div class="console-dots">
+          <span class="dot-red"></span>
+          <span class="dot-yellow"></span>
+          <span class="dot-green"></span>
+        </div>
+        <div style="font-size:9.5px;color:var(--text-muted);font-family:var(--font-mono);">output.typed</div>
+        <button class="btn btn-ghost" id="btnCopy">⎘ Copiar</button>
+      </div>
+      <div id="output">
+        <div id="output-inner">
+          <span class="o-placeholder">// Ingresa texto y presiona "Analizar" para comenzar…</span>
+        </div>
+      </div>
+      <div class="summary-box" style="margin-top:8px; background:#010409; border:1px solid var(--border-default); border-radius:8px; padding:10px; display:none;" id="summaryBox">
+         <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
+           <span style="font-size:10.5px; font-weight:700; color:#58a6ff;">🤖 Resumen IA Local (Transformers.js)</span>
+         </div>
+         <div id="summaryText" style="font-size:11.5px; color:var(--text-secondary); line-height:1.5;"></div>
+      </div>
+      <div style="display:flex; gap:5px; margin-top:8px;">
+         <button class="btn btn-secondary" id="btnSummarize" style="flex:1; font-size:10.5px;">🧠 Generar Resumen T5</button>
+         <button class="btn btn-primary" id="btnOpenWebLLM" style="flex:1; font-size:10.5px; background:#238636; border:none; color:white;">🚀 Abrir Motor Llama-3 (WebGPU)</button>
+      </div>
+    </div>
+
+    <!-- GRAPH PANEL -->
+    <div id="panel-graph">
+      <div class="graph-toolbar">
+        <label>Layout</label>
+        <select id="layoutSelect">
+          <option value="fcose">fCoSE (clusters) ★</option>
+          <option value="cose">CoSE orgánico</option>
+          <option value="breadthfirst">Árbol BFS</option>
+          <option value="concentric">Concéntrico</option>
+        </select>
+        <button class="btn btn-ghost" id="btnToggle3D">🌐 Ver 3D</button>
+        <button class="btn btn-ghost" id="btnFit">⊡ Fit</button>
+        <button class="btn btn-ghost" id="btnToggleLegend">☰ Leyenda</button>
+        <span class="graph-stats" id="graphStats">— · —</span>
+      </div>
+      <div class="graph-container-wrapper">
+        <div id="cy"></div>
+        <div id="graph3d"></div>
+      </div>
+      <div class="legend" id="legend"></div>
+    </div>
+    
+    <!-- CLOUD PANEL -->
+    <div id="panel-cloud">
+       <div class="cloud-wrapper">
+          <canvas id="cloudCanvas"></canvas>
+       </div>
+    </div>
+
+    <!-- HUMANIZER PANEL -->
+    <div id="panel-humanizer" style="display:none; flex-direction:column; gap:8px;">
+      <div class="console-toolbar">
+        <div style="font-size:10px;color:var(--text-secondary);font-weight:600;">Anti-IA Local (Open Source + Heurísticas)</div>
+        <button class="btn btn-primary" id="btnHumanize" style="padding:4px 10px; font-size:10px;">Aplicar Humanizador</button>
+      </div>
+      <textarea id="humanizerOutput" style="height:220px; font-family:var(--font-sans); font-size:12.5px;" placeholder="El texto humanizado (Burstiness + Perplejidad) aparecerá aquí..."></textarea>
+    </div>
+
+  </div>
+
+  <!-- FOOTER -->
+  <div class="footer">
+    <div class="footer-left">
+      <span class="footer-text">Data Typing Agent</span>
+      <span class="engine-pill" id="footerEngine">HEURÍSTICO</span>
+      <span class="v3-pill" id="footerVersion" style="display:none;">v3.0 NLP+</span>
+    </div>
+    <span class="footer-text" id="footerStats"></span>
+  </div>
+
+  <!-- SCRIPTS — order matters (CSP: all local) -->
+  <script src="cytoscape.min.js"></script>
+  <script src="libs/layout-base.js"></script>
+  <script src="libs/cose-base.js"></script>
+  <script src="libs/cytoscape-fcose.js"></script>
+  <script src="libs/popper.min.js"></script>
+  <script src="libs/tippy.umd.min.js"></script>
+  <script src="libs/compromise.min.js"></script>
+  <script src="libs/FileSaver.min.js"></script>
+  <script src="libs/turndown.js"></script>
+  <script src="libs/wordcloud2.js"></script>
+  <script src="libs/3d-force-graph.min.js"></script>
+  <script src="libs/transformers.min.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>

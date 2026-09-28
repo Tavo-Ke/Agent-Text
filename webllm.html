@@ -1,0 +1,30 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Motor WebLLM (Llama-3 Local)</title>
+    <style>
+        body { font-family: system-ui, sans-serif; background: #010409; color: #c9d1d9; margin: 0; padding: 20px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .log-box { background: #0d1117; border: 1px solid #30363d; padding: 15px; border-radius: 8px; height: 400px; overflow-y: auto; font-family: monospace; font-size: 14px; }
+        .input-box { width: 100%; padding: 12px; margin-top: 10px; background: #0d1117; color: white; border: 1px solid #30363d; border-radius: 8px; font-size: 14px; }
+        button { padding: 12px 24px; background: #238636; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
+        button:disabled { background: #1a5c27; cursor: not-allowed; color: #8b949e; }
+        h2 { color: #58a6ff; margin-bottom: 5px; }
+        p.subtitle { color: #8b949e; margin-top: 0; font-size: 14px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>🧠 Motor WebLLM (WebGPU Local)</h2>
+        <p class="subtitle">Descarga y corre un modelo de Llama-3 de 800MB directo en tu tarjeta de video. 100% Privado.</p>
+        
+        <button id="btnInit">1. Descargar e Inicializar Modelo</button>
+        <p id="status" style="color: #ff7b72; font-weight: bold;"></p>
+        
+        <div class="log-box" id="chatLog"></div>
+        <input type="text" id="userInput" class="input-box" placeholder="Escribe tu mensaje al Agente aquí y presiona Enter..." disabled>
+    </div>
+    <script type="module" src="webllm-app.js"></script>
+</body>
+</html>
